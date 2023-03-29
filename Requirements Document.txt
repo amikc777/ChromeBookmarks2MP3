@@ -1,0 +1,63 @@
+Requirements Document
+
+Background
+-You have been collecting YouTube music videos in a specific bookmark folder in Google Chrome, and you would like to convert them into MP3 files.
+-You would like to create a Python script that can search through your bookmarks and find the folder that holds these YouTube links, extract the video IDs from the links, and use a YouTube API to download the corresponding audio files and convert them into MP3 files.
+
+Features
+-The script should be able to read your Google Chrome bookmarks and find the folder that holds the YouTube music video links.
+-The script should be able to extract the video IDs from the YouTube links in the folder.
+-The script should use a YouTube API to download the audio files for each video ID.
+-The script should convert the audio files into MP3 files.
+-The script should save the MP3 files to a specified directory on your computer.
+
+Constraints
+-The script should only download audio files for YouTube videos that are allowed by their respective creators and the YouTube Terms of Service.
+-The script should not download audio files for YouTube videos that are already in MP3 format.
+
+Deliverables
+-A Python script that fulfills the requirements above.
+-A requirements.txt file that lists all the necessary libraries for running the script.
+
+
+Sprint Plan
+
+Sprint 1 (1-2 days)
+Research how to read Google Chrome bookmarks in Python.
+Write a Python script that can read Google Chrome bookmarks and print them to the console.
+
+Sprint 2 (2-3 days)
+Research how to extract video IDs from YouTube links in Python.
+Write a Python script that can extract the video IDs from a list of YouTube links.
+
+Sprint 3 (2-3 days)
+Research how to use a YouTube API to download audio files in Python.
+Write a Python script that can download the audio file for a single YouTube video ID.
+
+Sprint 4 (2-3 days)
+Research how to convert audio files to MP3 format in Python.
+Write a Python script that can convert a single audio file to MP3 format.
+
+Sprint 5 (2-3 days)
+Combine the scripts from Sprint 2, Sprint 3, and Sprint 4 to create a script that can download the audio files for a list of YouTube video IDs and convert them to MP3 format.
+Test the script and fix any bugs.
+
+Sprint 6 (1-2 days)
+Add functionality to the script to find the specific bookmark folder that holds the YouTube links.
+Test the script and fix any bugs.
+
+Sprint 7 (1-2 days)
+Add functionality to the script to save the MP3 files to a specified directory.
+Test the script and fix any bugs.
+
+Sprint 8 (1-2 days)
+Add error handling and edge cases to the script.
+Test the script and fix any bugs.
+
+Required Libraries
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+pytube
+ffmpeg-python
