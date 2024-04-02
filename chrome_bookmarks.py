@@ -39,12 +39,15 @@ url_label_width = url_label.winfo_reqwidth()
 # Define the spacing multiplier factor
 spacing = 0.10
 
+# Create entry widget for URL input
 url_entry = customtkinter.CTkEntry(master=root, placeholder_text="URL")
 url_entry.place(relx=0.1 + url_label_width / root.winfo_width() + spacing, rely=0.1)
 
+# Create button for downloading MP3
 download_button = customtkinter.CTkButton(master=root, text="Download MP3", command=download_mp3)
 download_button.place(relx=0.5, rely=0.7, anchor=CENTER)
 
+# Create label for displaying download status
 display_label = customtkinter.CTkLabel(master=root, text="", fg_color="black", wraplength=380)
 display_label.place(relx=0.5, rely=0.5, anchor=CENTER)
 
