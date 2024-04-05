@@ -80,6 +80,7 @@ class YoutubeToMP3Converter:
         # update progress bar itself
         self.progressBar.set(float(percentage_done) / 100)
 
-root = customtkinter.CTk()
-app = YoutubeToMP3Converter(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = customtkinter.CTk()
+    app = YoutubeToMP3Converter(root)
+    root.mainloop()
