@@ -4,6 +4,7 @@ from pytube import YouTube
 import os
 import json
 import shutil
+import threading
 
 class YoutubeToMP3Converter:
     def __init__(self, master):
@@ -47,6 +48,10 @@ class YoutubeToMP3Converter:
         return video_title.replace("/", "_").replace("[", "_").replace("]", "_").replace("|", "_")
 
     def download_mp3(self):
+        # Create a new thread to perform the download operation
+        threading.Thread(target=self.download_thread).start()
+
+    def download_thread(self):
         url = self.url_entry.get()
         with open("config.json") as config_file:
             config = json.load(config_file)
