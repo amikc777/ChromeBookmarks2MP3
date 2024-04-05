@@ -4,8 +4,8 @@ from pytube import YouTube
 import os
 import json
 import shutil
+import threading
 
-# print("Current working directory:", os.getcwd())
 class YoutubeToMP3Converter:
     def __init__(self, master):
         self.master = master
@@ -15,7 +15,7 @@ class YoutubeToMP3Converter:
 
         # Create and place the label
         self.url_label = customtkinter.CTkLabel(master=master, text="URL: ")
-        self.url_label.place(relx = 0.1, rely = 0.1)
+        self.url_label.place(relx=0.1, rely=0.1)
 
         # Get the width of the label
         url_label_width = self.url_label.winfo_reqwidth()
@@ -44,27 +44,28 @@ class YoutubeToMP3Converter:
         self.progressBar.set(0)
         self.progressBar.place(relx=0.5, rely=0.9, anchor=CENTER)
 
-
-    # Replace special characters in the video title with underscores.
     def sanitize_video_title(self, video_title):
-        return video_title.replace("/", "_").replace("[", "_").replace("]", "_")
+        return video_title.replace("/", "_").replace("[", "_").replace("]", "_").replace("|", "_")
 
     def download_mp3(self):
+        # Create a new thread to perform the download operation
+        threading.Thread(target=self.download_thread).start()
+
+    def download_thread(self):
         url = self.url_entry.get()
         with open("config.json") as config_file:
             config = json.load(config_file)
             download_path = config["download_path"]
+  
         try:
             yt = YouTube(url, on_progress_callback=self.on_progress)
             video_title = self.sanitize_video_title(yt.title)
-            # Construct the file path with the desired destination directory and video title
             destination = os.path.join(download_path, f"{video_title}.mp3")
             audio_stream = yt.streams.filter(only_audio=True).first()
             audio_stream.download(output_path=os.getcwd(), filename=f"{video_title}.mp3")
             shutil.move(f"{os.getcwd()}/{video_title}.mp3", destination)
             self.display_label.configure(text="MP3 Downloaded", fg_color="green")
-            print("MP3 downloaded sucessfully")
-
+            print("MP3 downloaded successfully")
         except Exception as e:
             self.display_label.configure(text="Error downloading MP3: " + str(e), fg_color="red")
             print("Error downloading MP3:", e)
@@ -77,9 +78,10 @@ class YoutubeToMP3Converter:
         self.percent_progress.configure(text=percent + '%')
         self.percent_progress.update()
         
-        # update progress bar itself
+        # Update progress bar
         self.progressBar.set(float(percentage_done) / 100)
 
-root = customtkinter.CTk()
-app = YoutubeToMP3Converter(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = customtkinter.CTk()
+    app = YoutubeToMP3Converter(root)
+    root.mainloop()
