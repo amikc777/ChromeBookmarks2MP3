@@ -1,26 +1,56 @@
-from selenium import webdriver
 import json
+import os
 
-# Path to the Chrome profile directory
-with open("config.json") as config_file:
-            config = json.load(config_file)
-            chrome_profile_path = config["chrome_profile_path"]
+class ChromeBookmarksParser:
+    def __init__(self, chrome_bookmarks_config_path):
+        self.chrome_bookmarks_config_path = chrome_bookmarks_config_path
+        self.load_config()
 
-# Initialize the WebDriver with Chrome options
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument(f'--user-data-dir={chrome_profile_path}')
-chrome_options.add_argument('--profile-directory=Default')  # Specify the default profile directory
+    def load_config(self):
+        with open(self.chrome_bookmarks_config_path, 'r') as config_file:
+            self.config = json.load(config_file)
+        
+    def find_folder_urls(self, folder_name):
+        bookmarks_file_path = self.config.get('chrome_profile_path')
+        if not bookmarks_file_path:
+            print("Chrome bookmarks file path not found in the config.")
+            return []
+        
+        if not bookmarks_file_path.endswith('.json'):
+            bookmarks_file_path = os.path.join(bookmarks_file_path, 'Bookmarks')
 
-try:
-    # Initialize the WebDriver with Chrome options
-    driver = webdriver.Chrome(options=chrome_options)
+        if not os.path.exists(bookmarks_file_path):
+            print(f"Bookmarks file not found at {bookmarks_file_path}.")
+            return []
+        
+        bookmarks_data = self.load_bookmarks(bookmarks_file_path)
+        return self._find_folder_urls_recursive(bookmarks_data, folder_name)
+    
+    def load_bookmarks(self, bookmarks_file_path):
+        with open(bookmarks_file_path, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    
+    def _find_folder_urls_recursive(self, node, folder_name):
+        if 'children' in node:
+            for child in node['children']:
+                if child.get('name') == folder_name:
+                    return [child['url']] if 'url' in child else []
+                elif child.get('children'):
+                    result = self._find_folder_urls_recursive(child, folder_name)
+                    if result:
+                        return result
+        return []
+    
 
-    # Navigate to the desired webpage
-    driver.get("https://www.google.com")
+if __name__ == "__main__":
+    chrome_bookmarks_config_path = 'config.json'
+    parser = ChromeBookmarksParser(chrome_bookmarks_config_path)
 
-    # Keep the script running indefinitely to prevent the browser window from closing
-    input("Press Enter to close the browser...")
+    folder_name = input("Enter the name of the folder to process: ")
+    folder_urls = parser.find_folder_urls(folder_name)
 
-except Exception as e:
-    print("An error occurred:", e)
-    input("Press Enter to exit...")
+    if folder_urls:
+        print("Found URLs in folder:", folder_urls)
+        # Integrate with YoutubeToMP3Converter class for processing
+    else:
+        print("Folder not found or no URLs found in the specified folder.")
