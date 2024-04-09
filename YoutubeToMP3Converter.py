@@ -48,6 +48,8 @@ class YoutubeToMP3Converter:
         return video_title.replace("/", "_").replace("[", "_").replace("]", "_").replace("|", "_")
 
     def download_mp3(self):
+        # Update display label to show "Looking up song" while it processes the download
+        self.display_label.configure(text="Looking up song...", fg_color="blue")
         # Create a new thread to perform the download operation
         threading.Thread(target=self.download_thread).start()
 
