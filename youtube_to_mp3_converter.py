@@ -2,12 +2,13 @@ from tkinter import *
 import customtkinter
 from pytube import YouTube
 import os
+import threading
+from queue import Queue
 import json
 import shutil
-import threading
 
 class YoutubeToMP3Converter:
-    def __init__(self, master):
+    def __init__(self, master, integrated=False):
         self.master = master
         master.title("Youtube to MP3 Converter")
         master.geometry("400x200")
@@ -44,33 +45,72 @@ class YoutubeToMP3Converter:
         self.progressBar.set(0)
         self.progressBar.place(relx=0.5, rely=0.9, anchor=CENTER)
 
+        self.url_queue = Queue()
+        self.processing = False  # Flag to indicate if a download is in progress
+        self.integrated = integrated  # Flag to indicate if integrated into the second script
+        self.total_urls = 0  # Total number of URLs to process
+        self.downloaded_count = 0  # Counter for successfully downloaded songs
+
     def sanitize_video_title(self, video_title):
-        return video_title.replace("/", "_").replace("[", "_").replace("]", "_").replace("|", "_")
+        return video_title.replace("/", "_").replace("[", "_").replace("]", "_").replace("|", "_").replace('"', "_")
+
+    def enqueue_url(self, url):
+        self.url_queue.put(url)
+        self.total_urls += 1  # Increment total number of URLs
+
+        if not self.processing:
+            self.process_next_url()
 
     def download_mp3(self):
-        # Update display label to show "Looking up song" while it processes the download
-        self.display_label.configure(text="Looking up song...", fg_color="blue")
-        # Create a new thread to perform the download operation
-        threading.Thread(target=self.download_thread).start()
-
-    def download_thread(self):
+        # Get the URL from the entry widget
         url = self.url_entry.get()
-        with open("config.json") as config_file:
-            config = json.load(config_file)
-            download_path = config["download_path"]
-  
+
+        # Update display label to show "Looking up song..."
+        self.display_label.configure(text="Looking up song...", fg_color="blue")
+
+        # Add URL to the queue for processing
+        self.enqueue_url(url)
+
+    def download_thread(self, url):
         try:
+            with open("config.json") as config_file:
+                config = json.load(config_file)
+                download_path = config["download_path"]
+
             yt = YouTube(url, on_progress_callback=self.on_progress)
             video_title = self.sanitize_video_title(yt.title)
             destination = os.path.join(download_path, f"{video_title}.mp3")
             audio_stream = yt.streams.filter(only_audio=True).first()
             audio_stream.download(output_path=os.getcwd(), filename=f"{video_title}.mp3")
             shutil.move(f"{os.getcwd()}/{video_title}.mp3", destination)
+
+            # Update display label and console output
             self.display_label.configure(text="MP3 Downloaded", fg_color="green")
             print("MP3 downloaded successfully")
+
         except Exception as e:
             self.display_label.configure(text="Error downloading MP3: " + str(e), fg_color="red")
             print("Error downloading MP3:", e)
+
+        self.processing = False
+        if self.integrated:  # Check if integrated mode
+            self.downloaded_count += 1  # Increment downloaded count
+
+            if self.downloaded_count == self.total_urls:
+                # Schedule the script to exit after 10 seconds
+                self.master.after(10000, self.exit_script)
+            else:
+                self.process_next_url()
+
+    def process_next_url(self):
+        if not self.url_queue.empty():
+            url = self.url_queue.get()
+            self.processing = True
+            threading.Thread(target=self.download_thread, args=(url,)).start()
+
+    def exit_script(self):
+        if self.master:
+            self.master.quit()
 
     def on_progress(self, stream, chunk, bytes_remaining):
         total_size = stream.filesize
@@ -83,7 +123,10 @@ class YoutubeToMP3Converter:
         # Update progress bar
         self.progressBar.set(float(percentage_done) / 100)
 
-if __name__ == "__main__":
+def main():
     root = customtkinter.CTk()
     app = YoutubeToMP3Converter(root)
     root.mainloop()
+
+if __name__ == "__main__":
+    main()
