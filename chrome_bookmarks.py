@@ -24,23 +24,30 @@ class ChromeBookmarksParser:
             return []
         
         bookmarks_data = self.load_bookmarks(bookmarks_file_path)
-        return self._find_folder_urls_recursive(bookmarks_data, folder_name)
+        return self._find_folder_urls_recursive(bookmarks_data['roots']['bookmark_bar'], folder_name)
     
     def load_bookmarks(self, bookmarks_file_path):
         with open(bookmarks_file_path, 'r', encoding='utf-8') as file:
             return json.load(file)
     
     def _find_folder_urls_recursive(self, node, folder_name):
+        urls = []
         if 'children' in node:
             for child in node['children']:
                 if child.get('name') == folder_name:
-                    return [child['url']] if 'url' in child else []
+                    urls.extend(self._get_urls_from_node(child))
                 elif child.get('children'):
-                    result = self._find_folder_urls_recursive(child, folder_name)
-                    if result:
-                        return result
-        return []
+                    urls.extend(self._find_folder_urls_recursive(child, folder_name))
+        return urls
     
+    def _get_urls_from_node(self, node):
+        urls = []
+        if node.get('type') == 'url':
+            urls.append(node['url'])
+        elif 'children' in node:
+            for child in node['children']:
+                urls.extend(self._get_urls_from_node(child))
+        return urls
 
 if __name__ == "__main__":
     chrome_bookmarks_config_path = 'config.json'
