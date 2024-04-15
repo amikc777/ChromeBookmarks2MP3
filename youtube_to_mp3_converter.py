@@ -7,7 +7,16 @@ from queue import Queue
 import json
 import shutil
 
+
 class YoutubeToMP3Converter:
+    """
+    Initialize the YoutubeToMP3Converter class with GUI elements
+    and setup necessary attributes for downloading MP3s.
+
+    Parameters:
+    - master: tkinter master widget
+    - integrated: flag to indicate integration with another script
+    """
     def __init__(self, master, integrated=False):
         self.master = master
         master.title("Youtube to MP3 Converter")
@@ -51,27 +60,46 @@ class YoutubeToMP3Converter:
         self.total_urls = 0  # Total number of URLs to process
         self.downloaded_count = 0  # Counter for successfully downloaded songs
 
+
     def sanitize_video_title(self, video_title):
+        """
+        Sanitize the video title to replace characters that may cause issues
+        when saving the MP3 file.
+        """
         return video_title.replace("/", "_").replace("[", "_").replace("]", "_").replace("|", "_").replace('"', "_")
 
+
     def enqueue_url(self, url):
+        """
+        Add a URL to the processing queue and increment the total count of URLs.
+        Start processing if no download is in progress.
+        """
         self.url_queue.put(url)
         self.total_urls += 1  # Increment total number of URLs
 
         if not self.processing:
             self.process_next_url()
 
-    def download_mp3(self):
-        # Get the URL from the entry widget
-        url = self.url_entry.get()
 
-        # Update display label to show "Looking up song..."
+    def download_mp3(self):
+        """
+        Triggered by the "Download MP3" button.
+        Retrieves URL from the entry widget and starts the download process.
+        Updates display to show "Looking up song..." while processing.
+        """
+        url = self.url_entry.get()
         self.display_label.configure(text="Looking up song...", fg_color="blue")
 
         # Add URL to the queue for processing
         self.enqueue_url(url)
 
+
     def download_thread(self, url):
+        """
+        Worker thread function to download MP3 from the provided URL.
+        Handles downloading, progress updates, and error handling.
+        Updates display label and console output upon completion.
+        """
         try:
             with open("config.json") as config_file:
                 config = json.load(config_file)
@@ -102,17 +130,35 @@ class YoutubeToMP3Converter:
             else:
                 self.process_next_url()
 
+
     def process_next_url(self):
+        """
+        Process the next URL in the queue if available.
+        Starts a new thread to download the URL.
+        """
         if not self.url_queue.empty():
             url = self.url_queue.get()
             self.processing = True
             threading.Thread(target=self.download_thread, args=(url,)).start()
 
+
     def exit_script(self):
+        """
+        Exit the script by quitting the tkinter application.
+        """
         if self.master:
             self.master.quit()
 
+
     def on_progress(self, stream, chunk, bytes_remaining):
+        """
+        Callback function to update download progress.
+
+        Parameters:
+        - stream: the pytube stream object
+        - chunk: chunk size of the download
+        - bytes_remaining: remaining bytes to download
+        """
         total_size = stream.filesize
         bytes_downloaded = total_size - bytes_remaining
         percentage_done = bytes_downloaded / total_size * 100
@@ -123,10 +169,17 @@ class YoutubeToMP3Converter:
         # Update progress bar
         self.progressBar.set(float(percentage_done) / 100)
 
+
 def main():
+    """
+    Entry point of the program.
+    Creates a Tkinter root window and initializes the YoutubeToMP3Converter application.
+    Starts the main event loop to handle GUI interactions.
+    """
     root = customtkinter.CTk()
     app = YoutubeToMP3Converter(root)
     root.mainloop()
+
 
 if __name__ == "__main__":
     main()
